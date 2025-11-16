@@ -138,11 +138,9 @@
         const player = document.getElementById('player');
         const playlistItems = document.querySelectorAll('#playlist li');
 
-        // Инициализация: первый трек по умолчанию
-        if (playlistItems.length > 0) {
-            player.src = playlistItems[0].dataset.src;
-            playlistItems[0].classList.add('active', 'playing');
-        }
+        // Инициализация: НЕ выделяем и НЕ воспроизводим первый трек
+        // player.src = playlistItems[0].dataset.src;
+        // playlistItems[0].classList.add('active', 'playing');
 
         // Обработчик клика по треку
         playlistItems.forEach(item => {
