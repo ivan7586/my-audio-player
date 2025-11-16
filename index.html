@@ -13,12 +13,6 @@
             background-color: #f9f9f9;
             color: #333;
         }
-        h1 {
-            text-align: center;
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
         #playlist {
             list-style-type: none;
             padding: 0;
@@ -31,6 +25,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: relative; /* Для позиционирования индикатора */
         }
         #playlist li:hover {
             background-color: #f0f7ff;
@@ -39,24 +34,57 @@
         }
         #playlist li.active {
             background-color: #e6f0ff;
-            border-left: 4px solid #77d5d7; /* Цвет изменён */
+            border-left: 4px solid #77d5d7;
+        }
+        /* Стили для индикатора воспроизведения */
+        #playlist li::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background-color: transparent;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(119, 213, 215, 0.7);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        #playlist li.playing::before {
+            background-color: #77d5d7;
+            box-shadow: 0 0 8px 2px rgba(119, 213, 215, 0.7);
+            animation: pulse 1.5s infinite ease-out;
         }
         #playlist li .author {
             font-weight: 600;
             display: block;
             margin-bottom: 4px;
+            margin-left: 15px; /* Отступ от индикатора */
         }
         #playlist li .title {
             font-style: italic;
             font-weight: 300;
             color: #555;
             font-size: 0.95em;
+            margin-left: 15px; /* Отступ от индикатора */
         }
         audio {
             width: 100%;
             margin-top: 20px;
             background-color: #fff;
             box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        }
+        /* Анимация пульсации */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(119, 213, 215, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(119, 213, 215, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(119, 213, 215, 0);
+            }
         }
     </style>
 </head>
@@ -66,7 +94,6 @@
             <span class="author">Митрополит Серафим Чигаев</span>
             <span class="title">О, Мати Божия</span>
         </li>
-  
         <li data-src="https://5221c570-e17b-4fde-9eda-07aa8d0dc0dd.selstorage.ru/2.%20%D0%9C%D0%B8%D1%82%D1%80%D0%BE%D0%BF%D0%BE%D0%BB%D0%B8%D1%82%20%D0%A1%D0%B5%D1%80%D0%B0%D1%84%D0%B8%D0%BC%20%D0%A7%D0%B8%D1%87%D0%B0%D0%B3%D0%BE%D0%B2.%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%BC%D0%BE%D0%BB%D0%B8%D1%82%D1%8C%D1%81%D1%8F.mp3">
             <span class="author">Митрополит Серафим Чигаев</span>
             <span class="title">Хочу молиться</span>
@@ -116,35 +143,55 @@
 
     <script>
         const player = document.getElementById('player');
-        const playlist = document.querySelectorAll('#playlist li');
+        const playlistItems = document.querySelectorAll('#playlist li');
 
         // Инициализация: первый трек по умолчанию
-        if (playlist.length > 0) {
-            player.src = playlist[0].dataset.src;
-            playlist[0].classList.add('active');
+        if (playlistItems.length > 0) {
+            player.src = playlistItems[0].dataset.src;
+            playlistItems[0].classList.add('active', 'playing');
         }
 
         // Обработчик клика по треку
-        playlist.forEach(item => {
+        playlistItems.forEach(item => {
             item.addEventListener('click', () => {
                 // Если клик на активном треке
                 if (item.classList.contains('active')) {
                     if (!player.paused) {
                         player.pause(); // Ставим на паузу
+                        item.classList.remove('playing'); // Убираем анимацию
                     } else {
                         player.play();  // Возобновляем воспроизведение
+                        item.classList.add('playing'); // Добавляем анимацию
                     }
                 } else {
-                    // Снимаем выделение с активного трека
-                    document.querySelector('#playlist li.active')?.classList.remove('active');
+                    // Снимаем выделение и анимацию со всех
+                    document.querySelectorAll('#playlist li.active').forEach(i => {
+                        i.classList.remove('active', 'playing');
+                    });
                     // Выделяем текущий трек
-                    item.classList.add('active');
+                    item.classList.add('active', 'playing');
                     // Меняем источник аудио
                     player.src = item.dataset.src;
                     // Начинаем воспроизведение
                     player.play();
                 }
             });
+        });
+
+        // Синхронизация паузы с событием 'pause' у аудио
+        player.addEventListener('pause', () => {
+            const activeItem = document.querySelector('#playlist li.active');
+            if (activeItem) {
+                activeItem.classList.remove('playing');
+            }
+        });
+
+        // Синхронизация воспроизведения с событием 'play' у аудио
+        player.addEventListener('play', () => {
+            const activeItem = document.querySelector('#playlist li.active');
+            if (activeItem) {
+                activeItem.classList.add('playing');
+            }
         });
     </script>
 </body>
